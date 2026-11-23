@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>外幣分批換匯平均成本計算機（日圓／韓元／美元攤平試算）｜免費工具</title>
+  <meta name="description" content="免費外幣分批換匯平均成本計算機：支援日圓、韓元、美元多筆換匯紀錄自動計算加權平均匯率、帳面匯差損益，並提供加碼攤平模擬與目標均價反推計算。" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23059669'/%3E%3Cpath d='M18 26h24l-6-6M46 38H22l6 6' fill='none' stroke='%23ffffff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <meta property="og:site_name" content="實用工具實驗室" />
+  <meta property="og:title" content="外幣分批換匯平均成本計算機（日圓／韓元／美元攤平試算）" />
+  <meta property="og:description" content="分批買日幣、美金不知道均價多少？輸入多筆換匯紀錄 1 秒算出真實平均成本，還能反推再買多少能攤平到目標匯率。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tool-lab-tw.github.io/fx-avg/" />
+  <script type="application/ld+json">
+  [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "實用工具實驗室",
+      "url": "https://tool-lab-tw.github.io/fx-avg/"
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "外幣分批換匯平均成本計算機",
+      "url": "https://tool-lab-tw.github.io/fx-avg/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TWD" }
+    }
+  ]
+  </script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 10h12l-4-4M17 14H5l4 4" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">外幣分批換匯平均成本計算機</h1>
+          <p class="text-xs text-slate-500 hidden sm:block">日圓・韓元・美元多筆買進均價、匯差損益與攤平目標反推</p>
+        </div>
+      </div>
+      <button id="btn-copy-summary" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+        </svg>
+        <span>複製均價</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+    <!-- Currency Selector -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-2 shadow-sm grid grid-cols-3 gap-1.5" role="group" aria-label="選擇外幣幣別">
+      <button type="button" data-curr="JPY" class="curr-btn py-2.5 px-3 rounded-xl text-sm font-bold transition-all bg-emerald-600 text-white shadow-sm">
+        日圓 JPY
+      </button>
+      <button type="button" data-curr="KRW" class="curr-btn py-2.5 px-3 rounded-xl text-sm font-bold transition-all bg-slate-50 text-slate-600 hover:bg-slate-100">
+        韓元 KRW
+      </button>
+      <button type="button" data-curr="USD" class="curr-btn py-2.5 px-3 rounded-xl text-sm font-bold transition-all bg-slate-50 text-slate-600 hover:bg-slate-100">
+        美元 USD
+      </button>
+    </div>
+
+    <!-- Summary Highlight Card -->
+    <section class="bg-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-medium text-slate-400">目前持有加權平均匯率（1 <span class="curr-code">JPY</span> 兌台幣）</p>
+          <div class="flex items-baseline gap-2.5 mt-1">
+            <span id="out-avg-rate" class="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums text-emerald-300">--</span>
+            <span class="text-sm text-slate-300">TWD</span>
+          </div>
+          <p id="out-inverse-rate" class="text-xs text-slate-400 mt-1 tabular-nums">等於 1 台幣平均換到 -- <span class="curr-code">JPY</span></p>
+        </div>
+        <div class="bg-slate-800/90 rounded-xl px-4 py-3 border border-slate-700/70 min-w-[160px]">
+          <label for="cur-market-rate" class="block text-[11px] text-slate-400 mb-1">目前最新匯率（比匯差用）</label>
+          <input id="cur-market-rate" type="number" step="0.0001" min="0.0001" value="0.2120"
+            class="w-full bg-slate-900 text-white px-2.5 py-1.5 rounded-lg border border-slate-600 text-sm font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
+        <div class="bg-slate-800/70 rounded-xl p-3.5 border border-slate-700/60">
+          <p class="text-xs text-slate-400">累計持有外幣</p>
+          <p id="out-total-fx" class="text-lg font-bold tabular-nums text-white mt-0.5">--</p>
+        </div>
+        <div class="bg-slate-800/70 rounded-xl p-3.5 border border-slate-700/60">
+          <p class="text-xs text-slate-400">累計投入台幣成本</p>
+          <p id="out-total-twd" class="text-lg font-bold tabular-nums text-white mt-0.5">--</p>
+        </div>
+        <div class="bg-slate-800/70 rounded-xl p-3.5 border border-slate-700/60">
+          <p class="text-xs text-slate-400">對照現價帳面匯差</p>
+          <p id="out-unrealized" class="text-lg font-bold tabular-nums mt-0.5">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Batch Entries Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-slate-900">分批換匯紀錄（自動記憶於本機）</h2>
+          <p class="text-xs text-slate-500 mt-0.5">輸入每次換匯金額與當時匯率，即時重算平均成本</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+            <button type="button" id="input-mode-fx" class="px-2.5 py-1 rounded-md bg-white text-slate-900 shadow-sm">填外幣額</button>
+            <button type="button" id="input-mode-twd" class="px-2.5 py-1 rounded-md text-slate-500">填台幣額</button>
+          </div>
+          <button id="btn-reset-demo" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">重設範例</button>
+        </div>
+      </div>
+
+      <!-- Column Labels -->
+      <div class="hidden sm:grid grid-cols-12 gap-2 px-2 text-xs font-semibold text-slate-500">
+        <div class="col-span-2">批次</div>
+        <div class="col-span-4" id="col-amt-header">換匯金額 (JPY)</div>
+        <div class="col-span-3">當時匯率</div>
+        <div class="col-span-2 text-right" id="col-calc-header">折合台幣</div>
+        <div class="col-span-1 text-right">刪除</div>
+      </div>
+
+      <div id="lots-container" class="space-y-2.5"></div>
+
+      <button id="btn-add-lot" type="button"
+        class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 text-sm font-semibold text-slate-700 hover:text-emerald-700 transition-all">
+        ＋ 新增一筆換匯紀錄
+      </button>
+    </section>
+
+    <!-- Averaging Down / Target Simulator -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-slate-900">逢低加碼攤平模擬器</h2>
+          <p class="text-xs text-slate-500 mt-0.5">模擬「現在再換一筆」均價降多少，或反推「想降到目標均價要再買多少」</p>
+        </div>
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-semibold">
+          <button type="button" id="sim-tab-add" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm">加碼後均價</button>
+          <button type="button" id="sim-tab-target" class="px-3 py-1.5 rounded-lg text-slate-500">反推目標均價</button>
+        </div>
+      </div>
+
+      <!-- Mode A: Add more -->
+      <div id="sim-panel-add" class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+        <div class="sm:col-span-6 grid grid-cols-2 gap-3">
+          <div>
+            <label for="sim-add-twd" class="block text-xs font-medium text-slate-600 mb-1">預計再投入台幣 (NT$)</label>
+            <input id="sim-add-twd" type="number" step="1000" min="0" value="10000"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+          </div>
+          <div>
+            <label for="sim-add-rate" class="block text-xs font-medium text-slate-600 mb-1">預計買進匯率</label>
+            <input id="sim-add-rate" type="number" step="0.0001" min="0.0001" value="0.2100"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+          </div>
+        </div>
+        <div class="sm:col-span-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <p class="text-xs text-emerald-800 font-medium">加碼後的新平均匯率</p>
+          <div class="flex items-baseline justify-between gap-2 mt-1">
+            <span id="out-sim-new-avg" class="text-2xl font-bold text-emerald-700 tabular-nums">--</span>
+            <span id="out-sim-diff" class="text-xs font-semibold text-emerald-700 tabular-nums">--</span>
+          </div>
+          <p id="out-sim-new-total" class="text-xs text-emerald-700/80 mt-1 tabular-nums">--</p>
+        </div>
+      </div>
+
+      <!-- Mode B: Reverse target -->
+      <div id="sim-panel-target" class="hidden grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+        <div class="sm:col-span-6 grid grid-cols-2 gap-3">
+          <div>
+            <label for="sim-target-avg" class="block text-xs font-medium text-slate-600 mb-1">想拉到的目標均價</label>
+            <input id="sim-target-avg" type="number" step="0.0001" min="0.0001" value="0.2140"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+          </div>
+          <div>
+            <label for="sim-target-buy-rate" class="block text-xs font-medium text-slate-600 mb-1">目前可買到的匯率</label>
+            <input id="sim-target-buy-rate" type="number" step="0.0001" min="0.0001" value="0.2100"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+          </div>
+        </div>
+        <div class="sm:col-span-6 bg-sky-50 border border-sky-200 rounded-xl p-4">
+          <p class="text-xs text-sky-800 font-medium">達成目標均價需要再加碼</p>
+          <p id="out-target-need-twd" class="text-2xl font-bold text-sky-700 tabular-nums mt-1">--</p>
+          <p id="out-target-need-fx" class="text-xs text-sky-700/85 mt-1 tabular-nums">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Travel Resources (4 Partner Cards) -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-3.5">
+      <h2 class="text-sm sm:text-base font-bold text-slate-900">日韓行前必備工具與優惠整理</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a href="https://adcenter.conn.tw/3aVfu" target="_blank" rel="noopener noreferrer sponsored"
+          class="block p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition-all group">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-bold text-slate-900 group-hover:text-emerald-700">Klook 客路｜日韓交通券＆樂園門票</span>
+            <span class="text-xs font-semibold text-emerald-600 shrink-0">前往查看 →</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">機場快線、新幹線／JR Pass、環球影城與首爾票券線上預訂，現場免排隊。</p>
+        </a>
+        <a href="https://shoppingfun.co/3aVfo" target="_blank" rel="noopener noreferrer sponsored"
+          class="block p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition-all group">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-bold text-slate-900 group-hover:text-emerald-700">eSIM4Travel｜日韓免換卡高速 eSIM</span>
+            <span class="text-xs font-semibold text-emerald-600 shrink-0">前往查看 →</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">掃描 QR Code 立即開通日韓網路，免拔實體 SIM 卡、下飛機直接上網。</p>
+        </a>
+        <a href="https://afftkr.site/track/clicks/4145/c627c2bc9b0724ddfc8fec23d62e9e44256848c063b2a0f90361b60071401de3c021e7e5593c99616c" target="_blank" rel="noopener noreferrer sponsored"
+          class="block p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition-all group">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-bold text-slate-900 group-hover:text-emerald-700">翔翼通訊｜日韓實體 SIM 卡＆Wi-Fi 機</span>
+            <span class="text-xs font-semibold text-emerald-600 shrink-0">前往查看 →</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">台灣老牌出國上網方案，提供實體上網卡、eSIM 與多人共用 Wi-Fi 機。</p>
+        </a>
+        <a href="https://twshop4coupon.com/track/clicks/8682/c627c2bc9b0724ddfc8cec23d62e9e44256848c063b2a0f90f66ba0771401de3c021e7e5593c99616c" target="_blank" rel="noopener noreferrer sponsored"
+          class="block p-4 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition-all group">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-bold text-slate-900 group-hover:text-emerald-700">Agoda｜日本、韓國飯店限時優惠</span>
+            <span class="text-xs font-semibold text-emerald-600 shrink-0">前往查看 →</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">東京、大阪、首爾、釜山住宿比價，常有會員隱藏價與免費取消房型。</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- SEO Quick Reference & FAQ -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+      <h2 class="text-base font-bold text-slate-900">外幣分批換匯常見問題</h2>
+      <div class="divide-y divide-slate-100 text-sm">
+        <details class="py-3 group" open>
+          <summary class="font-semibold text-slate-800 cursor-pointer list-none flex items-center justify-between">
+            <span>外幣分批買進的平均匯率怎麼算才正確？</span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▾</span>
+          </summary>
+          <p class="text-slate-600 mt-2 leading-relaxed">
+            不能單純把幾次匯率相加除以次數，而要使用<strong>加權平均法</strong>：將「累計投入總台幣金額」除以「累計換到的總外幣金額」。例如先用 0.22 換 5 萬日圓（花 11,000 台幣），再用 0.21 換 10 萬日圓（花 21,000 台幣），真實均價是 32,000 ÷ 150,000 ＝ <strong>0.2133</strong>。
+          </p>
+        </details>
+        <details class="py-3 group">
+          <summary class="font-semibold text-slate-800 cursor-pointer list-none flex items-center justify-between">
+            <span>在網銀買完外幣，提領現鈔還會有額外成本嗎？</span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▾</span>
+          </summary>
+          <p class="text-slate-600 mt-2 leading-relaxed">
+            網銀外幣帳戶買進時通常走較便宜的「即期賣出匯率」，若後續到臨櫃或外幣 ATM 提領實體現鈔，銀行會加收「即期與現金賣出匯率的匯差手續費」（部分銀行提供減免或外幣 ATM 優惠）。若搭配支援<strong>雙幣信用卡</strong>直接扣外幣帳戶，則可省去提領現鈔的匯差成本。
+          </p>
+        </details>
+        <details class="py-3 group">
+          <summary class="font-semibold text-slate-800 cursor-pointer list-none flex items-center justify-between">
+            <span>算出平均換匯成本後，怎麼判斷去日韓該付現還是刷卡？</span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▾</span>
+          </summary>
+          <p class="text-slate-600 mt-2 leading-relaxed">
+            把這裡算出的「平均匯率」帶到我們的 <a href="https://tool-lab-tw.github.io/jp-calc/" target="_blank" rel="noopener noreferrer" class="text-emerald-700 font-semibold underline underline-offset-2">日韓旅遊刷卡 vs. 換現鈔計算機</a>，填入你手上的信用卡海外回饋％數，就能一秒比出這趟旅程刷卡還是付現比較省。
+          </p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white mt-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-5 text-center text-xs text-slate-400 space-y-2">
+      <p class="text-slate-500 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+        <span>更多免費實用工具：</span>
+        <a href="https://tool-lab-tw.github.io/jp-calc/" target="_blank" rel="noopener noreferrer" class="text-slate-700 font-medium underline underline-offset-2 hover:text-slate-900">日韓旅遊刷卡＆退稅計算機</a>
+        <span aria-hidden="true">｜</span>
+        <a href="https://stock-lab-tw.github.io/tw-stock-calc/" target="_blank" rel="noopener noreferrer" class="text-slate-700 font-medium underline underline-offset-2 hover:text-slate-900">台股損益平衡＆融資斷頭試算器</a>
+      </p>
+      <p>免責聲明：本計算機僅供個人外幣分批換匯成本與匯差估算參考，實際換匯匯率與提領現鈔手續費請依各往來銀行牌告為準。</p>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div id="toast" role="status" aria-live="polite"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-medium shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 max-w-[90vw] text-center">
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const DEFAULTS = {
+        JPY: {
+          code: 'JPY',
+          marketRate: 0.2120,
+          simAddRate: 0.2100,
+          simTargetAvg: 0.2140,
+          step: 0.0005,
+          decimals: 4,
+          lots: [
+            { id: 1, fx: 50000, rate: 0.2200 },
+            { id: 2, fx: 50000, rate: 0.2160 },
+            { id: 3, fx: 50000, rate: 0.2120 },
+          ],
+        },
+        KRW: {
+          code: 'KRW',
+          marketRate: 0.0235,
+          simAddRate: 0.0230,
+          simTargetAvg: 0.0236,
+          step: 0.0001,
+          decimals: 5,
+          lots: [
+            { id: 1, fx: 300000, rate: 0.0242 },
+            { id: 2, fx: 500000, rate: 0.0236 },
+          ],
+        },
+        USD: {
+          code: 'USD',
+          marketRate: 32.10,
+          simAddRate: 31.80,
+          simTargetAvg: 32.20,
+          step: 0.05,
+          decimals: 3,
+          lots: [
+            { id: 1, fx: 500, rate: 32.60 },
+            { id: 2, fx: 500, rate: 32.20 },
+          ],
+        },
+      };
+
+      const STORAGE_KEY = 'toollab_fx_avg_v1';
+
+      const state = {
+        currency: 'JPY',
+        inputMode: 'fx', // 'fx' | 'twd'
+        simMode: 'add',  // 'add' | 'target'
+        data: {},
+        nextId: 100,
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function cloneDefaults() {
+        const out = {};
+        Object.keys(DEFAULTS).forEach((k) => {
+          out[k] = {
+            marketRate: DEFAULTS[k].marketRate,
+            lots: DEFAULTS[k].lots.map((l) => ({ ...l })),
+          };
+        });
+        return out;
+      }
+
+      function loadState() {
+        state.data = cloneDefaults();
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object') {
+              Object.keys(DEFAULTS).forEach((k) => {
+                if (parsed[k] && Array.isArray(parsed[k].lots) && parsed[k].lots.length > 0) {
+                  state.data[k] = {
+                    marketRate: Number(parsed[k].marketRate) || DEFAULTS[k].marketRate,
+                    lots: parsed[k].lots.map((l, i) => ({
+                      id: Number(l.id) || (i + 1),
+                      fx: Number(l.fx) || 0,
+                      rate: Number(l.rate) || DEFAULTS[k].marketRate,
+                    })),
+                  };
+                }
+              });
+            }
+          }
+        } catch (e) {
+          // Ignore storage restrictions
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+        } catch (e) {
+          // Ignore storage restrictions
+        }
+      }
+
+      function fmtInt(n) {
+        if (!Number.isFinite(n)) return '--';
+        return Math.round(n).toLocaleString('zh-TW');
+      }
+
+      function fmtRate(r) {
+        if (!Number.isFinite(r) || r <= 0) return '--';
+        return r.toFixed(DEFAULTS[state.currency].decimals);
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = $('toast');
+        el.textContent = msg;
+        el.classList.remove('opacity-0');
+        el.classList.add('opacity-100');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.remove('opacity-100');
+          el.classList.add('opacity-0');
+        }, 2400);
+      }
+
+      function getTotals() {
+        const lots = state.data[state.currency].lots;
+        let totalFx = 0;
+        let totalTwd = 0;
+        lots.forEach((lot) => {
+          if (lot.fx > 0 && lot.rate > 0) {
+            totalFx += lot.fx;
+            totalTwd += lot.fx * lot.rate;
+          }
+        });
+        const avgRate = totalFx > 0 ? totalTwd / totalFx : 0;
+        return { totalFx, totalTwd, avgRate };
+      }
+
+      function renderSummaryAndSim() {
+        const cfg = DEFAULTS[state.currency];
+        const { totalFx, totalTwd, avgRate } = getTotals();
+        const marketRate = parseFloat($('cur-market-rate').value);
+
+        document.querySelectorAll('.curr-code').forEach((el) => {
+          el.textContent = cfg.code;
+        });
+
+        if (totalFx <= 0 || avgRate <= 0) {
+          $('out-avg-rate').textContent = '--';
+          $('out-inverse-rate').textContent = `請至少輸入一筆有效換匯金額與匯率`;
+          $('out-total-fx').textContent = `0 ${cfg.code}`;
+          $('out-total-twd').textContent = 'NT$ 0';
+          $('out-unrealized').textContent = '--';
+          $('out-unrealized').className = 'text-lg font-bold tabular-nums text-slate-300 mt-0.5';
+          return;
+        }
+
+        $('out-avg-rate').textContent = fmtRate(avgRate);
+        const inv = 1 / avgRate;
+        $('out-inverse-rate').textContent = `等於 1 台幣平均換到 ${inv < 1 ? inv.toFixed(4) : inv.toFixed(2)} ${cfg.code}`;
+        $('out-total-fx').textContent = `${fmtInt(totalFx)} ${cfg.code}`;
+        $('out-total-twd').textContent = `NT$ ${fmtInt(totalTwd)}`;
+
+        if (Number.isFinite(marketRate) && marketRate > 0) {
+          const curValTwd = totalFx * marketRate;
+          const pnl = curValTwd - totalTwd;
+          const pct = (pnl / totalTwd) * 100;
+          const sign = pnl > 0 ? '+' : '';
+          $('out-unrealized').textContent = `${sign}NT$ ${fmtInt(pnl)} (${sign}${pct.toFixed(2)}%)`;
+          $('out-unrealized').className = pnl > 0
+            ? 'text-lg font-bold tabular-nums text-rose-400 mt-0.5'
+            : pnl < 0
+              ? 'text-lg font-bold tabular-nums text-emerald-400 mt-0.5'
+              : 'text-lg font-bold tabular-nums text-slate-200 mt-0.5';
+        } else {
+          $('out-unrealized').textContent = '--';
+        }
+
+        // Simulator Mode A: Add more
+        const addTwd = parseFloat($('sim-add-twd').value);
+        const addRate = parseFloat($('sim-add-rate').value);
+        if (Number.isFinite(addTwd) && addTwd > 0 && Number.isFinite(addRate) && addRate > 0) {
+          const addFx = addTwd / addRate;
+          const newTotalFx = totalFx + addFx;
+          const newTotalTwd = totalTwd + addTwd;
+          const newAvg = newTotalTwd / newTotalFx;
+          const delta = newAvg - avgRate;
+          $('out-sim-new-avg').textContent = fmtRate(newAvg);
+          $('out-sim-diff').textContent = delta < 0
+            ? `均價下降 ${Math.abs(delta).toFixed(cfg.decimals)}`
+            : delta > 0
+              ? `均價上升 ${delta.toFixed(cfg.decimals)}`
+              : '均價不變';
+          $('out-sim-new-total').textContent = `加碼後總持有 ${fmtInt(newTotalFx)} ${cfg.code}（總投入 NT$ ${fmtInt(newTotalTwd)}）`;
+        } else {
+          $('out-sim-new-avg').textContent = fmtRate(avgRate);
+          $('out-sim-diff').textContent = '請輸入加碼金額與匯率';
+          $('out-sim-new-total').textContent = '--';
+        }
+
+        // Simulator Mode B: Reverse target
+        const targetAvg = parseFloat($('sim-target-avg').value);
+        const buyRate = parseFloat($('sim-target-buy-rate').value);
+        if (Number.isFinite(targetAvg) && targetAvg > 0 && Number.isFinite(buyRate) && buyRate > 0) {
+          if (targetAvg >= avgRate && buyRate <= targetAvg) {
+            $('out-target-need-twd').textContent = '已達標！';
+            $('out-target-need-fx').textContent = `你目前的平均匯率（${fmtRate(avgRate)}）已經比目標（${fmtRate(targetAvg)}）更低。`;
+          } else if (buyRate >= targetAvg && avgRate > targetAvg) {
+            $('out-target-need-twd').textContent = '無法達成';
+            $('out-target-need-fx').textContent = `目前買進匯率（${fmtRate(buyRate)}）必須低於目標均價（${fmtRate(targetAvg)}）才能往下攤平。`;
+          } else if (buyRate <= targetAvg && avgRate < targetAvg) {
+            $('out-target-need-twd').textContent = '無法達成';
+            $('out-target-need-fx').textContent = `目前買進匯率需高於目標均價才能往上拉高均價。`;
+          } else {
+            // Solve: (totalTwd + addFx * buyRate) / (totalFx + addFx) = targetAvg
+            // => addFx = (totalTwd - targetAvg * totalFx) / (targetAvg - buyRate)
+            const needFx = (totalTwd - targetAvg * totalFx) / (targetAvg - buyRate);
+            const needTwd = needFx * buyRate;
+            if (needFx > 0 && Number.isFinite(needTwd)) {
+              $('out-target-need-twd').textContent = `約 NT$ ${fmtInt(needTwd)}`;
+              $('out-target-need-fx').textContent = `需在 ${fmtRate(buyRate)} 再買進約 ${fmtInt(needFx)} ${cfg.code}`;
+            } else {
+              $('out-target-need-twd').textContent = '--';
+              $('out-target-need-fx').textContent = '請檢查目標均價與目前匯率設定';
+            }
+          }
+        } else {
+          $('out-target-need-twd').textContent = '--';
+          $('out-target-need-fx').textContent = '請輸入目標均價與目前匯率';
+        }
+      }
+
+      function renderLots() {
+        const cfg = DEFAULTS[state.currency];
+        const lots = state.data[state.currency].lots;
+        const isFxMode = state.inputMode === 'fx';
+
+        $('col-amt-header').textContent = isFxMode ? `換匯金額 (${cfg.code})` : '投入台幣 (NT$)';
+        $('col-calc-header').textContent = isFxMode ? '折合台幣' : `換得 ${cfg.code}`;
+
+        const container = $('lots-container');
+        container.innerHTML = lots.map((lot, idx) => {
+          const displayAmt = isFxMode ? Math.round(lot.fx) : Math.round(lot.fx * lot.rate);
+          const calcText = isFxMode
+            ? `NT$ ${fmtInt(lot.fx * lot.rate)}`
+            : `${fmtInt(lot.fx)} ${cfg.code}`;
+          return `
+            <div class="lot-row grid grid-cols-12 gap-2 items-center bg-slate-50 rounded-xl p-2.5 border border-slate-200/80" data-lot-id="${lot.id}">
+              <div class="col-span-3 sm:col-span-2 text-xs font-bold text-slate-600">第 ${idx + 1} 批</div>
+              <div class="col-span-5 sm:col-span-4">
+                <input type="number" step="any" min="0" value="${displayAmt}" data-field="amt"
+                  aria-label="第 ${idx + 1} 批金額"
+                  class="lot-input w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+              </div>
+              <div class="col-span-4 sm:col-span-3">
+                <input type="number" step="${cfg.step}" min="0.0001" value="${lot.rate}" data-field="rate"
+                  aria-label="第 ${idx + 1} 批匯率"
+                  class="lot-input w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+              </div>
+              <div class="col-span-9 sm:col-span-2 text-left sm:text-right text-xs font-semibold text-slate-600 tabular-nums lot-calc-cell">${calcText}</div>
+              <div class="col-span-3 sm:col-span-1 text-right">
+                <button type="button" data-del-id="${lot.id}" class="btn-del-lot px-2 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" aria-label="刪除第 ${idx + 1} 批">刪除</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.querySelectorAll('.lot-input').forEach((inp) => {
+          inp.addEventListener('input', (e) => {
+            const row = e.target.closest('.lot-row');
+            const id = Number(row.dataset.lotId);
+            const lot = state.data[state.currency].lots.find((l) => l.id === id);
+            if (!lot) return;
+
+            const amtVal = parseFloat(row.querySelector('[data-field="amt"]').value);
+            const rateVal = parseFloat(row.querySelector('[data-field="rate"]').value);
+            lot.rate = Number.isFinite(rateVal) && rateVal > 0 ? rateVal : 0;
+
+            if (state.inputMode === 'fx') {
+              lot.fx = Number.isFinite(amtVal) && amtVal >= 0 ? amtVal : 0;
+            } else {
+              lot.fx = (Number.isFinite(amtVal) && amtVal >= 0 && lot.rate > 0) ? (amtVal / lot.rate) : 0;
+            }
+
+            const calcCell = row.querySelector('.lot-calc-cell');
+            calcCell.textContent = state.inputMode === 'fx'
+              ? `NT$ ${fmtInt(lot.fx * lot.rate)}`
+              : `${fmtInt(lot.fx)} ${cfg.code}`;
+
+            saveState();
+            renderSummaryAndSim();
+          });
+        });
+
+        container.querySelectorAll('.btn-del-lot').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = Number(btn.dataset.delId);
+            const arr = state.data[state.currency].lots;
+            if (arr.length <= 1) {
+              showToast('至少需保留一筆紀錄，可直接修改數字。');
+              return;
+            }
+            state.data[state.currency].lots = arr.filter((l) => l.id !== id);
+            saveState();
+            renderLots();
+            renderSummaryAndSim();
+          });
+        });
+      }
+
+      function switchCurrency(curr) {
+        state.currency = curr;
+        const cfg = DEFAULTS[curr];
+        document.querySelectorAll('.curr-btn').forEach((b) => {
+          const active = b.dataset.curr === curr;
+          b.className = active
+            ? 'curr-btn py-2.5 px-3 rounded-xl text-sm font-bold transition-all bg-emerald-600 text-white shadow-sm'
+            : 'curr-btn py-2.5 px-3 rounded-xl text-sm font-bold transition-all bg-slate-50 text-slate-600 hover:bg-slate-100';
+        });
+
+        $('cur-market-rate').value = state.data[curr].marketRate;
+        $('cur-market-rate').step = cfg.step;
+        $('sim-add-rate').value = cfg.simAddRate;
+        $('sim-add-rate').step = cfg.step;
+        $('sim-target-avg').value = cfg.simTargetAvg;
+        $('sim-target-avg').step = cfg.step;
+        $('sim-target-buy-rate').value = cfg.simAddRate;
+        $('sim-target-buy-rate').step = cfg.step;
+
+        renderLots();
+        renderSummaryAndSim();
+      }
+
+      // Currency buttons
+      document.querySelectorAll('.curr-btn').forEach((btn) => {
+        btn.addEventListener('click', () => switchCurrency(btn.dataset.curr));
+      });
+
+      // Input mode toggle
+      function setInputMode(mode) {
+        state.inputMode = mode;
+        const isFx = mode === 'fx';
+        $('input-mode-fx').className = isFx ? 'px-2.5 py-1 rounded-md bg-white text-slate-900 shadow-sm' : 'px-2.5 py-1 rounded-md text-slate-500';
+        $('input-mode-twd').className = !isFx ? 'px-2.5 py-1 rounded-md bg-white text-slate-900 shadow-sm' : 'px-2.5 py-1 rounded-md text-slate-500';
+        renderLots();
+      }
+      $('input-mode-fx').addEventListener('click', () => setInputMode('fx'));
+      $('input-mode-twd').addEventListener('click', () => setInputMode('twd'));
+
+      // Add lot
+      $('btn-add-lot').addEventListener('click', () => {
+        const cfg = DEFAULTS[state.currency];
+        const lots = state.data[state.currency].lots;
+        const last = lots[lots.length - 1];
+        state.nextId += 1;
+        lots.push({
+          id: state.nextId,
+          fx: last ? Math.round(last.fx) : cfg.lots[0].fx,
+          rate: parseFloat($('cur-market-rate').value) || cfg.marketRate,
+        });
+        saveState();
+        renderLots();
+        renderSummaryAndSim();
+      });
+
+      // Reset demo
+      $('btn-reset-demo').addEventListener('click', () => {
+        const cfg = DEFAULTS[state.currency];
+        state.data[state.currency] = {
+          marketRate: cfg.marketRate,
+          lots: cfg.lots.map((l) => ({ ...l })),
+        };
+        $('cur-market-rate').value = cfg.marketRate;
+        saveState();
+        renderLots();
+        renderSummaryAndSim();
+        showToast(`已重設 ${cfg.code} 範例換匯紀錄`);
+      });
+
+      // Market rate & simulator inputs
+      $('cur-market-rate').addEventListener('input', () => {
+        const v = parseFloat($('cur-market-rate').value);
+        if (Number.isFinite(v) && v > 0) {
+          state.data[state.currency].marketRate = v;
+          saveState();
+        }
+        renderSummaryAndSim();
+      });
+
+      ['sim-add-twd', 'sim-add-rate', 'sim-target-avg', 'sim-target-buy-rate'].forEach((id) => {
+        $(id).addEventListener('input', renderSummaryAndSim);
+      });
+
+      // Simulator tabs
+      function setSimMode(mode) {
+        state.simMode = mode;
+        const isAdd = mode === 'add';
+        $('sim-panel-add').classList.toggle('hidden', !isAdd);
+        $('sim-panel-target').classList.toggle('hidden', isAdd);
+        $('sim-tab-add').className = isAdd ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm' : 'px-3 py-1.5 rounded-lg text-slate-500';
+        $('sim-tab-target').className = !isAdd ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm' : 'px-3 py-1.5 rounded-lg text-slate-500';
+      }
+      $('sim-tab-add').addEventListener('click', () => setSimMode('add'));
+      $('sim-tab-target').addEventListener('click', () => setSimMode('target'));
+
+      // Copy summary
+      $('btn-copy-summary').addEventListener('click', () => {
+        const { totalFx, totalTwd, avgRate } = getTotals();
+        const code = DEFAULTS[state.currency].code;
+        const text = `【${code} 分批換匯成本】總持有 ${fmtInt(totalFx)} ${code}｜總投入 NT$ ${fmtInt(totalTwd)}｜加權平均匯率：${fmtRate(avgRate)}`;
+
+        const fallbackCopy = (str) => {
+          const ta = document.createElement('textarea');
+          ta.value = str;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand('copy');
+            showToast('已複製平均匯率結果！');
+          } catch (e) {
+            showToast('複製失敗，請手動選取複製。');
+          }
+          document.body.removeChild(ta);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text)
+            .then(() => showToast('已複製平均匯率結果！'))
+            .catch(() => fallbackCopy(text));
+        } else {
+          fallbackCopy(text);
+        }
+      });
+
+      // Init
+      loadState();
+      switchCurrency('JPY');
+    })();
+  </script>
+  <script>var ConverlyCustomData = {channelId: null};</script>
+  <script async defer src="https://cdn.adotone.com/production/adlinks/23c1396816138b5012317378ade8e49903ca174367b084371855b4712cd32d3b.js"></script>
+</body>
+</html>
