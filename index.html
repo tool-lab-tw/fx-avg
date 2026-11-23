@@ -68,13 +68,18 @@
           <p class="text-xs text-slate-500 hidden sm:block">日圓・韓元・美元多筆買進均價、匯差損益與攤平目標反推</p>
         </div>
       </div>
-      <button id="btn-copy-summary" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0">
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="https://tool-lab-tw.github.io/" class="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors">
+          <span>← 工具總覽</span>
+        </a>
+        <button id="btn-copy-summary" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
           <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
         </svg>
         <span>複製均價</span>
-      </button>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -295,11 +300,12 @@
 
   <footer class="border-t border-slate-200 bg-white mt-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 py-5 text-center text-xs text-slate-400 space-y-2">
-      <p class="text-slate-500 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-        <span>更多免費實用工具：</span>
-        <a href="https://tool-lab-tw.github.io/jp-calc/" target="_blank" rel="noopener noreferrer" class="text-slate-700 font-medium underline underline-offset-2 hover:text-slate-900">日韓旅遊刷卡＆退稅計算機</a>
+      <p class="text-slate-500 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1">
+        <a href="https://tool-lab-tw.github.io/" class="text-slate-700 font-semibold underline underline-offset-2 hover:text-slate-900">實用工具實驗室首頁</a>
         <span aria-hidden="true">｜</span>
-        <a href="https://stock-lab-tw.github.io/tw-stock-calc/" target="_blank" rel="noopener noreferrer" class="text-slate-700 font-medium underline underline-offset-2 hover:text-slate-900">台股損益平衡＆融資斷頭試算器</a>
+        <a href="https://tool-lab-tw.github.io/jp-calc/" class="text-slate-600 hover:text-slate-900 underline underline-offset-2">日韓刷卡＆退稅計算機</a>
+        <span aria-hidden="true">｜</span>
+        <a href="https://stock-lab-tw.github.io/tw-stock-calc/" class="text-slate-600 hover:text-slate-900 underline underline-offset-2">台股損益＆融資斷頭試算器</a>
       </p>
       <p>免責聲明：本計算機僅供個人外幣分批換匯成本與匯差估算參考，實際換匯匯率與提領現鈔手續費請依各往來銀行牌告為準。</p>
     </div>
